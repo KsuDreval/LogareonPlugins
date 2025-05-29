@@ -1,14 +1,18 @@
 ﻿using System;
 using Npgsql;
 
+public class ABC
+{
+    public string domain;
+    public string category;
+    public string sku;
+}
 class sqlQuery
 {
-    public static void Main ()
-    {
-        //строка для подключения
-        string connectionStrig = "Host=192.168.200.13;Port=5432;Database=DatamartDocker2;Username=postgres;Password=postgres;";
-        //запрос в бд
-        string queryString = $@"WITH 
+    //строка для подключения
+    static string connectionStrig = "Host=192.168.200.13;Port=5432;Database=DatamartDocker2;Username=postgres;Password=postgres;";
+    //запрос в бд
+    static string queryString = $@"WITH 
         -- Все SKU из таблицы товаров с нужными полями
         all_skus AS (
             SELECT 
@@ -138,26 +142,65 @@ class sqlQuery
                 ELSE 3
             END,
             total_quantity DESC;";
+    static string skuUuid = "OX_UUID";
+    static string skuCategory = "abc_category";
+    static string domain = "SKU_Domain";
+    public static void Main()
+    {
+        List<ABC> list = ReadDataBase();
+        WriteDataBase(list);
+        WriteToDictionary(list);
+    }
 
-        NpgsqlConnection conn = new NpgsqlConnection(connectionStrig);
-        conn.Open ();
+    private static void WriteToDictionary(List<ABC> list)
+    {
+        throw new NotImplementedException();
+    }
 
-        NpgsqlCommand cmd = new NpgsqlCommand (queryString, conn);
+    private static void WriteDataBase(List<ABC> list)
+    {
+        //обернуть все в try catch
+        //открыть соединение с бд
+        //пробежаться по всем элментам листа (можно foreach){
+        //создать sql-комманду для записи строки в бд
+        //выполнить sql-комманду
+        //закрыть sql-комманду}
+        //закрыть соединение с бд
+    }
 
-        NpgsqlDataReader reader = cmd.ExecuteReader();
-
-        for (int i = 0; i < 10; i++)
+    static List<ABC> ReadDataBase()
+    {
+        List<ABC> list = new List<ABC>();
+        try
         {
-            if (reader.Read())
+
+            NpgsqlConnection conn = new NpgsqlConnection(connectionStrig);
+            conn.Open();
+
+            NpgsqlCommand cmd = new NpgsqlCommand(queryString, conn);
+
+            NpgsqlDataReader reader = cmd.ExecuteReader();
+
+            while (reader.Read())
             {
-                foreach (var item in reader)
-                {
-                    Console.WriteLine(item.ToString());
-                }
+                Console.WriteLine(reader[domain].ToString() + " " + reader[skuUuid].ToString() + " " + reader[skuCategory].ToString());
+                ABC abc = new ABC();
+                abc.sku = reader[skuUuid].ToString();
+                abc.domain = reader[domain].ToString();
+                abc.category = reader[skuCategory].ToString();
+                list.Add(abc);
             }
-            else break;
+            reader.Close();
+            conn.Close();
         }
-        reader.Close ();
-        conn.Close ();
+        catch (Exception ex)
+        {
+            Log(ex.Message);
+        }
+        return list;
+    }
+    public static void Log(string msg)
+    {
+        Console.WriteLine(msg);
     }
 }
